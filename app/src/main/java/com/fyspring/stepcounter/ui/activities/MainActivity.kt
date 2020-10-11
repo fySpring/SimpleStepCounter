@@ -1,11 +1,16 @@
 package com.fyspring.stepcounter.ui.activities
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.os.*
 import android.view.View
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.fyspring.stepcounter.R
 import com.fyspring.stepcounter.base.BaseActivity
 import com.fyspring.stepcounter.bean.StepEntity
@@ -44,6 +49,51 @@ class MainActivity : BaseActivity(), Handler.Callback {
         curSelDate = TimeUtil.getCurrentDate()
         calenderView = BeforeOrAfterCalendarView(this)
         movement_records_calender_ll!!.addView(calenderView)
+        requestPermission()
+    }
+
+    override fun initListener() {
+        calenderView!!.setOnBoaCalenderClickListener(object :
+            BeforeOrAfterCalendarView.BoaCalenderClickListener {
+            override fun onClickToRefresh(position: Int, curDate: String) {
+                //获取当前选中的时间
+                curSelDate = curDate
+                //根据日期去取数据
+                setDatas()
+            }
+        })
+    }
+
+    private fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
+                    1
+                )
+                if (ActivityCompat.shouldShowRequestPermissionRationale(
+                        this,
+                        Manifest.permission.ACTIVITY_RECOGNITION
+                    )
+                ) {
+                    //此处需要弹窗通知用户去设置权限
+                    Toast.makeText(this, "请允许获取健身运动信息，不然不能为你计步哦~", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                startStepService()
+            }
+        } else {
+            startStepService()
+        }
+    }
+
+
+    private fun startStepService() {
         /**
          * 这里判断当前设备是否支持计步
          */
@@ -58,16 +108,21 @@ class MainActivity : BaseActivity(), Handler.Callback {
         }
     }
 
-    override fun initListener() {
-        calenderView!!.setOnBoaCalenderClickListener(object :
-            BeforeOrAfterCalendarView.BoaCalenderClickListener {
-            override fun onClickToRefresh(position: Int, curDate: String) {
-                //获取当前选中的时间
-                curSelDate = curDate
-                //根据日期去取数据
-                setDatas()
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1) {
+            for (i in permissions.indices) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    startStepService()
+                } else {
+                    Toast.makeText(this, "请允许获取健身运动信息，不然不能为你计步哦~", Toast.LENGTH_SHORT).show()
+                }
             }
-        })
+        }
     }
 
     /**

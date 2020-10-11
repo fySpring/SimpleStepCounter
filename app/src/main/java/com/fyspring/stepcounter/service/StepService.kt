@@ -86,8 +86,7 @@ class StepService : Service(), SensorEventListener {
             notificationChannel.enableLights(false)//如果使用中的设备支持通知灯，则说明此通知通道是否应显示灯
             notificationChannel.setShowBadge(false)//是否显示角标
             notificationChannel.lockscreenVisibility = Notification.VISIBILITY_SECRET
-            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(notificationChannel)
+            notificationManager?.createNotificationChannel(notificationChannel)
             builder?.setChannelId(ConstantData.CHANNEL_ID)
         } else {
             builder = Notification.Builder(this.applicationContext)
